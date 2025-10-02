@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id       String     @id @default(uuid())
+  name     String // Название категории (UA)
+  parentId String?
+  parent   Category?  @relation("Subcategories", fields: [parentId], references: [id])
+  children Category[] @relation("Subcategories")
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String // Название (UA)
+  description String?
+  price       Float
+  createdAt   DateTime @default(now())
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Можно хранить userName или sessionId, если нужно различать пользователей
+  sessionId String?
+  messages  Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id])
+
+  fromAdmin Boolean @default(false) // true = написал админ, false = клиент
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  content   String
+  rating    Int      @default(5) // от 1 до 5
+  avatar    String
+  author    String? // имя автора (если оставляет)
+  createdAt DateTime @default(now())
+}
