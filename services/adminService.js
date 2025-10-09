@@ -1,31 +1,40 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+
+const path = require('path');
+const supabase = require('../lib/supabase');
 
 const prisma = new PrismaClient();
 
 class AdminService {
   async login(email, password) {
-    // В реальном проекте админы должны быть в БД
-    // Здесь для демонстрации используем переменные окружения
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const token = jwt.sign(
-        { id: 'admin', role: 'admin', email },
-        process.env.JWT_SECRET || 'secret',
-        { expiresIn: '24h' }
-      );
-      
-      return {
-        token,
-        user: {
-          id: 'admin',
-          email,
-          role: 'admin'
-        }
-      };
+    const admin = await prisma.admin.findUnique({ where: { email } });
+
+    if (!admin) {
+      throw new Error('Адміністратора не знайдено');
     }
-    
-    throw new Error('Невірні дані для входу');
+
+    const isValid = await bcrypt.compare(password, admin.password);
+    if (!isValid) {
+      throw new Error('Невірний пароль');
+    }
+
+    const token = jwt.sign(
+      { id: admin.id, role: admin.role, email: admin.email },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '24h' }
+    );
+
+    return {
+      token,
+      user: {
+        id: admin.id,
+        email: admin.email,
+        role: admin.role
+      }
+    };
   }
 
   // === КАТЕГОРИИ ===
@@ -108,7 +117,7 @@ class AdminService {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: { category: true },
+        include: { category: true ,   images: true,},
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' }
@@ -132,32 +141,103 @@ class AdminService {
       where: { id },
       include: {
         category: {
-          include: { parent: true }
+          include: { parent: true,   images: true, }
         }
       }
     });
   }
+  async createProduct(data, files) {
+    const imageUrls = [];
 
-  async createProduct(data) {
-    return await prisma.product.create({
-      data,
-      include: { category: true }
+    // Загружаем изображения в Supabase
+    for (const file of files) {
+      const fileExt = file.originalname.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+        });
+
+      if (uploadError) throw new Error('Ошибка загрузки изображения');
+
+      // Получаем публичный URL
+      const { data: publicData } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+      imageUrls.push(publicData.publicUrl);
+    }
+
+    // Сохраняем товар в базе
+    const product = await prisma.product.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        price: parseFloat(data.price),
+        category: { connect: { id: data.categoryId } }, // привязка по UUID
+        images: { createMany: { data: imageUrls.map(url => ({ url })) } },
+      },
+      include: { images: true },
     });
+
+    return product;
   }
 
-  async updateProduct(id, data) {
-    return await prisma.product.update({
-      where: { id },
-      data,
-      include: { category: true }
-    });
-  }
+  async updateProduct(id, data, files) {
+    let imageUrls = [];
 
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const fileExt = file.originalname.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const filePath = `products/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('products')
+          .upload(filePath, file.buffer, { contentType: file.mimetype });
+
+        if (uploadError) throw new Error('Ошибка загрузки изображения');
+
+        const { data: publicData } = supabase.storage
+          .from('products')
+          .getPublicUrl(filePath);
+
+        imageUrls.push(publicData.publicUrl);
+      }
+    }
+
+    // Обновляем товар
+    const updated = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: data.name,
+        description: data.description,
+        price: parseFloat(data.price),
+        category: { connect: { id: data.categoryId } },
+        ...(imageUrls.length > 0
+          ? { images: { createMany: { data: imageUrls.map(url => ({ url })) } } }
+          : {}),
+      },
+      include: { images: true },
+    });
+
+    return updated;
+  }
   async deleteProduct(id) {
+    // Удаляем все изображения продукта
+    await prisma.productImage.deleteMany({
+      where: { productId: id },
+    });
+  
+    // Потом удаляем сам продукт
     return await prisma.product.delete({
-      where: { id }
+      where: { id },
     });
   }
+  
 
   // === ЧАТЫ ===
   async getAllChats(page, limit) {

@@ -2,10 +2,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 class ProductService {
-  async getAllProducts({ page, limit, filters, sortBy, sortOrder }) {
+  async getAllProducts({ page, limit, filters = {}, sortBy = 'createdAt', sortOrder = 'desc' }) {
     const skip = (page - 1) * limit;
     const where = {};
-
+  
     // Применяем фильтры
     if (filters.categoryId) where.categoryId = filters.categoryId;
     if (filters.search) {
@@ -19,43 +19,46 @@ class ProductService {
       if (filters.minPrice) where.price.gte = filters.minPrice;
       if (filters.maxPrice) where.price.lte = filters.maxPrice;
     }
-
+  
     const orderBy = {};
     orderBy[sortBy] = sortOrder;
-
+  
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: { category: true },
+        include: {
+          category: true,
+          images: true, // ✅ Добавляем изображения
+        },
         skip,
         take: limit,
-        orderBy
+        orderBy,
       }),
-      prisma.product.count({ where })
+      prisma.product.count({ where }),
     ]);
-
+  
     return {
       products,
       pagination: {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
-
+  
   async getProductById(id) {
     return await prisma.product.findUnique({
       where: { id },
       include: {
-        category: {
-          include: { parent: true }
-        }
-      }
+        category: { include: { parent: true } },
+        images: true, // ✅ Добавляем изображения
+      },
     });
   }
-
+  
+  
   async searchProducts(query, page, limit) {
     const skip = (page - 1) * limit;
     const where = {

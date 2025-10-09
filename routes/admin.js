@@ -4,6 +4,7 @@ const adminController = require('../controllers/adminController');
 const authMiddleware = require('../middleware/auth');
 const adminMiddleware = require('../middleware/admin');
 const { validateCategory, validateProduct, validateReview, validateMessage } = require('../middleware/validation');
+const upload = require('../middleware/upload');
 
 // Публичные маршруты (без аутентификации)
 router.post('/login', adminController.login);
@@ -21,9 +22,12 @@ router.delete('/categories/:id', adminController.deleteCategory);
 // === УПРАВЛЕНИЕ ТОВАРАМИ ===
 router.get('/products', adminController.getAllProducts);
 router.get('/products/:id', adminController.getProductById);
-router.post('/products', validateProduct, adminController.createProduct);
-router.put('/products/:id', adminController.updateProduct);
-router.delete('/products/:id', adminController.deleteProduct);
+router.post('/products',  upload.array('images', 10), adminController.createProduct);
+router.put(
+  '/products/:id',
+  upload.array('images', 10),
+  adminController.updateProduct
+);router.delete('/products/:id', adminController.deleteProduct);
 
 // === УПРАВЛЕНИЕ ЧАТАМИ ===
 router.get('/chats', adminController.getAllChats);

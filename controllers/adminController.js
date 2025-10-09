@@ -1,4 +1,5 @@
 const adminService = require('../services/adminService');
+const supabase = require('../lib/supabase');
 
 class AdminController {
   // === АУТЕНТИФИКАЦИЯ ===
@@ -121,49 +122,58 @@ class AdminController {
       next(error);
     }
   }
-
   async createProduct(req, res, next) {
     try {
-      const { name, description, price, categoryId } = req.body;
-      const product = await adminService.createProduct({
-        name,
-        description,
-        price: parseFloat(price),
-        categoryId
-      });
-      
+      // multer уже распарсил multipart/form-data
+      const files = req.files || [];
+      const body = req.body;
+  
+      // multer всё приводит к строкам, поэтому числа нужно парсить
+      const productData = {
+        name: body.name,
+        description: body.description,
+        price: parseFloat(body.price) || 0,
+        categoryId: body.categoryId ? body.categoryId : null,
+      };
+  
+      const product = await adminService.createProduct(productData, files);
+  
       res.status(201).json({
         success: true,
-        message: 'Товар створено',
-        product
+        message: 'Товар успішно створено',
+        product,
       });
     } catch (error) {
       next(error);
     }
   }
-
+  
   async updateProduct(req, res, next) {
     try {
       const { id } = req.params;
-      const updateData = {};
-      
-      const { name, description, price, categoryId } = req.body;
-      
-      if (name !== undefined) updateData.name = name;
-      if (description !== undefined) updateData.description = description;
-      if (price !== undefined) updateData.price = parseFloat(price);
-      if (categoryId !== undefined) updateData.categoryId = categoryId;
-
-      const product = await adminService.updateProduct(id, updateData);
+      const files = req.files || [];
+      const body = req.body;
+  
+      const productData = {
+        name: body.name,
+        description: body.description,
+        price: parseFloat(body.price) || 0,
+        categoryId: body.categoryId ? parseInt(body.categoryId) : null,
+        stock: body.stock ? parseInt(body.stock) : 0,
+      };
+  
+      const product = await adminService.updateProduct(id, productData, files);
+  
       res.json({
         success: true,
-        message: 'Товар оновлено',
-        product
+        message: 'Товар успішно оновлено',
+        product,
       });
     } catch (error) {
       next(error);
     }
   }
+  
 
   async deleteProduct(req, res, next) {
     try {

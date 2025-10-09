@@ -21,7 +21,7 @@ const validateCategory = [
     .matches(/^[\u0400-\u04FF\s\w\-.,!?()]+$/)
     .withMessage('Назва категорії містить недозволені символи'),
   body('parentId')
-    .optional()
+  .optional({ nullable: true })
     .isUUID()
     .withMessage('parentId повинен бути валідним UUID'),
   handleValidationErrors
