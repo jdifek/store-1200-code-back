@@ -1,25 +1,19 @@
 const productService = require('../services/productService');
+const { PrismaClient } = require('@prisma/client');
 
+const prisma = new PrismaClient();
 class ProductController {
   async getAllProducts(req, res, next) {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        categoryId,
-        search,
-        minPrice,
-        maxPrice,
-        sortBy = 'createdAt',
-        sortOrder = 'desc'
-      } = req.query;
-      
+      const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+  
+      // Разбираем фильтры из query
       const filters = {};
-      if (categoryId) filters.categoryId = categoryId;
-      if (search) filters.search = search;
-      if (minPrice) filters.minPrice = parseFloat(minPrice);
-      if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
-      
+      if (req.query['filters[categoryId]']) filters.categoryId = req.query['filters[categoryId]'];
+      if (req.query['filters[search]']) filters.search = req.query['filters[search]'];
+      if (req.query['filters[minPrice]']) filters.minPrice = parseFloat(req.query['filters[minPrice]']);
+      if (req.query['filters[maxPrice]']) filters.maxPrice = parseFloat(req.query['filters[maxPrice]']);
+  
       const result = await productService.getAllProducts({
         page: parseInt(page),
         limit: parseInt(limit),
@@ -27,7 +21,7 @@ class ProductController {
         sortBy,
         sortOrder
       });
-      
+  
       res.json({
         success: true,
         ...result
@@ -36,6 +30,7 @@ class ProductController {
       next(error);
     }
   }
+  
 
   async getProductById(req, res, next) {
     try {

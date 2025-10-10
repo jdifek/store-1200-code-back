@@ -30,12 +30,7 @@ app.use(helmet({
 }));
 
 // CORS configuration
-app.use(cors({
-  origin: [process.env.CLIENT_URL, process.env.CLIENT_URL_FRONT],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
