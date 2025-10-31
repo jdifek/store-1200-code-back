@@ -1,6 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const { v4: uuidv4 } = require('uuid');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 class ChatService {
   async startChat(sessionId) {

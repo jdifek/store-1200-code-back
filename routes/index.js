@@ -7,6 +7,7 @@ const categoryRoutes = require('./categories');
 const productRoutes = require('./products');
 const chatRoutes = require('./chat');
 const reviewRoutes = require('./reviews');
+const ordersRoutes = require('./orderRoutes');
 
 // Mount routes
 router.use('/admin', adminRoutes);
@@ -14,6 +15,7 @@ router.use('/categories', categoryRoutes);
 router.use('/products', productRoutes);
 router.use('/chat', chatRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/orders', ordersRoutes);
 
 // Health check for API
 router.get('/health', (req, res) => {

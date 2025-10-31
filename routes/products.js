@@ -5,6 +5,10 @@ const productController = require('../controllers/productController');
 // Получить все товары с фильтрацией и пагинацией
 router.get('/', productController.getAllProducts);
 
+router.get('/three-random', productController.getRandomProducts);
+
+router.post('/cart', productController.getProductsFromCart);
+
 // Поиск товаров
 router.get('/search', productController.searchProducts);
 

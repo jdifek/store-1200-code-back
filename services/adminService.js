@@ -1,12 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
 const path = require('path');
 const supabase = require('../lib/supabase');
+const prisma = require('../lib/prisma');
 
-const prisma = new PrismaClient();
 
 class AdminService {
   async login(email, password) {
