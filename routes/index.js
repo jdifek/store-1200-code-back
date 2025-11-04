@@ -13,7 +13,7 @@ const ordersRoutes = require('./orderRoutes');
 router.use('/admin', adminRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/products', productRoutes);
-router.use('/chat', chatRoutes);
+router.use('/chats', chatRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/orders', ordersRoutes);
 
