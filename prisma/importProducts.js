@@ -105,13 +105,16 @@ async function main() {
         const text = fs.readFileSync(descFilePath, "utf-8");
       
         // 💰 Ищем цену только по явному ключевому слову "Ціна:"
-        const priceMatch = text.match(/Ціна[\s:—\-]*([\d\s.,]+)/i);
-        if (priceMatch) {
-          price = parseFloat(priceMatch[1].replace(/[\s,.\u00A0]/g, ""));
-        }
-      
+        const priceMatch = text.match(/Ціна\s*[:\-]\s*([\d\s.,]+)\s*грн/i);
+  if (priceMatch) {
+    price = parseFloat(priceMatch[1].replace(/[\s,.\u00A0]/g, ""));
+  }
+
         // 🧹 Убираем только строку с ценой (не трогаем похожие в названии)
-        let description = text.replace(/^.*?Ціна[\s:—\-]*[\d\s.,]+[\s]*грн?[^\n]*\n?/gim, "").trim();
+        description = text.replace(
+          /^.*?Ціна[\s:—\-]*[\d\s.,]+[\s]*грн?[^\n]*\n?/gim,
+          ""
+        ).trim();
       
         // ✂️ Если есть слово "Опис" — отрезаем всё до него
         const opisIndex = description.search(/Опис/i);
@@ -124,7 +127,11 @@ async function main() {
       
         // 🏷️ Определяем название
         const firstLine = description.split("\n")[0].trim();
-        if (firstLine.length > 0 && firstLine.length < 120 && productFolder.match(/^\d+$/)) {
+        if (
+          firstLine.length > 0 &&
+          firstLine.length < 120 &&
+          productFolder.match(/^\d+$/)
+        ) {
           // Только если имя папки — цифра, берём первую строку как имя
           productName = firstLine;
           description = description.split("\n").slice(1).join("\n").trim();
@@ -132,6 +139,7 @@ async function main() {
       
         console.log(`📝 ${productName} | Цена: ${price}`);
       }
+      
       
     
       // Проверяем, есть ли товар

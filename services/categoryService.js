@@ -17,6 +17,12 @@ class CategoryService {
     });
   }
 
+  async getTopFourCategories() {
+    return await prisma.category.findMany({
+      take: 4,
+      orderBy: { name: 'asc' }
+    });
+  }
   async getCategoryById(id) {
     return await prisma.category.findUnique({
       where: { id },

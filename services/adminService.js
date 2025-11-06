@@ -2,7 +2,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
-const path = require('path');
 const supabase = require('../lib/supabase');
 const prisma = require('../lib/prisma');
 

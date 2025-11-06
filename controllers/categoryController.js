@@ -12,6 +12,17 @@ class CategoryController {
       next(error);
     }
   }
+  async getTopFourCategories(req, res, next) {
+    try {
+      const categories = await categoryService.getTopFourCategories();
+      res.json({
+        success: true,
+        categories
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 
   async getCategoryById(req, res, next) {
     try {

@@ -4,6 +4,7 @@ const categoryController = require('../controllers/categoryController');
 
 // Получить все категории (иерархическая структура)
 router.get('/', categoryController.getAllCategories);
+router.get('/getTopFourCategories', categoryController.getTopFourCategories);
 
 // Получить категорию по ID
 router.get('/:id', categoryController.getCategoryById);
